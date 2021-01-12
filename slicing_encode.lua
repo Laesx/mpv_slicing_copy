@@ -13,6 +13,10 @@ local o = {
     target_dir = "~~/cutfragments",
     vcodec = "copy",
     acodec = "copy",
+	preset = "medium",
+	crf = "20",
+	hwaccel = "auto",
+	vformat = "mp4",
 }
 
 Command = { }
@@ -70,7 +74,7 @@ end
 
 local function get_outname(shift, endpos)
     local name = mp.get_property("filename/no-ext")
-    local fmt = file_format()
+    local fmt = o.vformat
     name = string.format("%s_%s-%s", name, timestamp(shift), timestamp(endpos))
     name = name:gsub(":", "-")
     return string.format("%s.%s", name, fmt)
@@ -95,10 +99,14 @@ local function cut(shift, endpos)
         cmds:arg('-referer', referer)
     end
     cmds:arg("-ss", (command_template.ss:gsub("$shift", shift)))
-        :arg("-i", inpath)
+        :arg("-hwaccel", o.hwaccel)
+		:arg("-i", inpath)
         :arg("-t", (command_template.t:gsub("$duration", endpos - shift)))
         :arg("-c:v", o.vcodec)
+		:arg("-preset", o.preset)
+		:arg("-crf", o.crf)
         :arg("-c:a", o.acodec)
+		:arg("-f", o.vformat)
         :arg((copy_audio and {nil} or {"-an"})[1])
         :arg(outpath)
     msg.info("Run commands: " .. cmds:as_str())
@@ -159,6 +167,6 @@ elseif not file.is_dir then
     msg.warn(string.format("target_dir `%s` is a file", o.target_dir))
 end
 o.target_dir = mp.command_native({ "expand-path", o.target_dir })
-mp.add_key_binding("c", "slicing_mark", toggle_mark)
-mp.add_key_binding("a", "slicing_audio", toggle_audio)
-mp.add_key_binding("C", "clear_slicing_mark", clear_toggle_mark)
+mp.add_key_binding("c", "slicing_mark_encode", toggle_mark)
+mp.add_key_binding("a", "slicing_audio_encode", toggle_audio)
+mp.add_key_binding("C", "clear_slicing_mark_encode", clear_toggle_mark)
